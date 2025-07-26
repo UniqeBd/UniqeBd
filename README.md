@@ -19,7 +19,7 @@
 - 🌱 I'm passionate about **Android & Web Development**
 - 👯 I'm looking to collaborate on **open source projects**
 - 💬 Ask me about **Flutter, React, Node.js, and Mobile Development**
-- 📫 How to reach me: **shoaibalshanbd@gmail.com**
+- 📫 How to reach me: **shoaibhossain2302@gmail.com**
 - ⚡ Fun fact: **I love solving complex problems with elegant code solutions!**
 
 ---
