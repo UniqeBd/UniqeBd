@@ -60,12 +60,12 @@
 
 | Language   | Percentage | Progress Bar |
 |------------|------------|--------------|
-| TeX        | 44.60%     | ![TeX](https://progress-bar.dev/45/?scale=100&title=TeX&width=200&color=008080&suffix=%) |
-| HTML       | 20.57%     | ![HTML](https://progress-bar.dev/21/?scale=100&title=HTML&width=200&color=E34F26&suffix=%) |
-| Dart       | 17.19%     | ![Dart](https://progress-bar.dev/17/?scale=100&title=Dart&width=200&color=0175C2&suffix=%) |
-| JavaScript | 13.11%     | ![JavaScript](https://progress-bar.dev/13/?scale=100&title=JavaScript&width=200&color=F7DF1E&suffix=%) |
-| C++        | 2.40%      | ![C++](https://progress-bar.dev/2/?scale=100&title=C++&width=200&color=00599C&suffix=%) |
-| CSS        | 2.12%      | ![CSS](https://progress-bar.dev/2/?scale=100&title=CSS&width=200&color=1572B6&suffix=%) |
+| TeX        | 44.60%     | ![TeX](https://img.shields.io/badge/TeX-44.60%25-008080?style=flat-square) |
+| HTML       | 20.57%     | ![HTML](https://img.shields.io/badge/HTML-20.57%25-E34F26?style=flat-square) |
+| Dart       | 17.19%     | ![Dart](https://img.shields.io/badge/Dart-17.19%25-0175C2?style=flat-square) |
+| JavaScript | 13.11%     | ![JavaScript](https://img.shields.io/badge/JavaScript-13.11%25-F7DF1E?style=flat-square&labelColor=black) |
+| C++        | 2.40%      | ![C++](https://img.shields.io/badge/C++-2.40%25-00599C?style=flat-square) |
+| CSS        | 2.12%      | ![CSS](https://img.shields.io/badge/CSS-2.12%25-1572B6?style=flat-square) |
 
 </div>
 
