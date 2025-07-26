@@ -110,7 +110,7 @@
   <a href="mailto: shoaibhossain2302@gmail.com">
     <img src="https://img.shields.io/badge/Gmail-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Gmail"/>
   </a>
-  <a href="https://linkedin.com/in/shoaib-alshan" target="_blank">
+  <a href="[https://linkedin.com/in/shoaib-alshan](https://www.linkedin.com/in/shoaib-hossain-alshan-khan-01289528b/)" target="_blank">
     <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"/>
   </a>
 </p>
@@ -118,7 +118,7 @@
 ### Follow Me on Social Media 🌐
 
 <p>
-  <a href="https://facebook.com/stylookalshan" target="_blank">
+  <a href="https://facebook.com/stylookalshan" target="_blank"> 
     <img src="https://img.shields.io/badge/Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white" alt="Facebook"/>
   </a>
   <a href="https://instagram.com/shoaib.alshan" target="_blank">
