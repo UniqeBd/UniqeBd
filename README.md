@@ -1,6 +1,6 @@
 <div align="center">
   
-# Hi there, I'm Shoaib Hossain Alshan Khan 👋
+# Hi there, I'm Shoaib Hossain Alshan 👋
 
 ### 💻 Developer from Bangladesh 🇧🇩
 
