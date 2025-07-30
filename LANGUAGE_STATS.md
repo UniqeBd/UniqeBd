@@ -21,6 +21,7 @@ This repository contains an automated system that updates the language usage sta
 - **Automatic Updates**: No manual intervention needed when adding new repositories
 - **Rate Limiting**: Built-in delays to respect GitHub API rate limits
 - **Language Colors**: Maintains consistent badge colors for popular languages
+- **React Detection**: Automatically detects React projects and shows React as a separate language
 - **Top Languages**: Shows top 10 most used languages by percentage
 - **Fork Exclusion**: Excludes forked repositories from statistics
 - **Error Handling**: Graceful handling of API errors and rate limits
@@ -41,6 +42,8 @@ Edit the `language_colors` dictionary in `scripts/update_language_stats.py`:
 ```python
 self.language_colors = {
     'NewLanguage': 'COLOR_HEX',
+    'React': '61DAFB',        # React projects
+    'JSX': '61DAFB',          # JSX files
     # ... existing colors
 }
 ```
