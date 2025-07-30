@@ -41,7 +41,9 @@ class LanguageStatsUpdater:
             'C#': '239120',
             'Shell': '89E051',
             'Vue': '4FC08D',
-            'Ruby': 'CC342D'
+            'Ruby': 'CC342D',
+            'React': '61DAFB',
+            'JSX': '61DAFB'
         }
     
     def get_user_repositories(self) -> List[Dict]:
@@ -90,6 +92,22 @@ class LanguageStatsUpdater:
             print(f"Error fetching languages for {repo_name}: {e}")
             return {}
     
+    def is_react_project(self, repo_name: str, repo_data: Dict) -> bool:
+        """Detect if a repository is a React project"""
+        # Check if repo name contains react
+        if 'react' in repo_name.lower():
+            return True
+            
+        # Check if repository description mentions React
+        description = repo_data.get('description', '').lower()
+        if 'react' in description:
+            return True
+            
+        # For comprehensive detection, we could check for package.json with React deps
+        # but that would require additional API calls. The name-based detection
+        # should be sufficient for most cases.
+        return False
+    
     def calculate_language_statistics(self) -> Dict[str, float]:
         """Calculate language usage percentages across all repositories"""
         repositories = self.get_user_repositories()
@@ -106,10 +124,41 @@ class LanguageStatsUpdater:
             
             languages = self.get_repository_languages(repo_name)
             
-            for language, bytes_count in languages.items():
-                if language not in language_totals:
-                    language_totals[language] = 0
-                language_totals[language] += bytes_count
+            # Check if this is a React project
+            is_react = self.is_react_project(repo_name, repo)
+            
+            if is_react and 'JavaScript' in languages:
+                # For React projects, convert a portion of JavaScript to React
+                js_bytes = languages['JavaScript']
+                # Assume 60% of JavaScript in React projects is actually React code
+                react_bytes = int(js_bytes * 0.6)
+                remaining_js = js_bytes - react_bytes
+                
+                print(f"  Detected React project! Converting {react_bytes} bytes to React")
+                
+                # Add React bytes
+                if 'React' not in language_totals:
+                    language_totals['React'] = 0
+                language_totals['React'] += react_bytes
+                
+                # Add remaining JavaScript bytes if any
+                if remaining_js > 0:
+                    if 'JavaScript' not in language_totals:
+                        language_totals['JavaScript'] = 0
+                    language_totals['JavaScript'] += remaining_js
+                
+                # Add other languages as-is
+                for language, bytes_count in languages.items():
+                    if language != 'JavaScript':
+                        if language not in language_totals:
+                            language_totals[language] = 0
+                        language_totals[language] += bytes_count
+            else:
+                # Add all languages as-is for non-React projects
+                for language, bytes_count in languages.items():
+                    if language not in language_totals:
+                        language_totals[language] = 0
+                    language_totals[language] += bytes_count
             
             # Rate limiting
             time.sleep(0.1)
