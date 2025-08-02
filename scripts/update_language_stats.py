@@ -108,9 +108,11 @@ class LanguageStatsUpdater:
         # should be sufficient for most cases.
         return False
     
-    def calculate_language_statistics(self) -> Dict[str, float]:
+    def calculate_language_statistics(self, repositories: List[Dict] = None) -> Dict[str, float]:
         """Calculate language usage percentages across all repositories"""
-        repositories = self.get_user_repositories()
+        if repositories is None:
+            repositories = self.get_user_repositories()
+        
         language_totals = {}
         
         print(f"Found {len(repositories)} repositories")
@@ -183,6 +185,92 @@ class LanguageStatsUpdater:
         """Get color code for a language badge"""
         return self.language_colors.get(language, '808080')  # Default gray
     
+    def detect_frameworks_and_tools(self, repositories: List[Dict]) -> Dict[str, bool]:
+        """Detect frameworks and tools used across repositories"""
+        detected = {
+            'Flutter': False,
+            'React': False,
+            'Node.js': False,
+            'Firebase': False,
+            'MySQL': False,
+            'Android Studio': False
+        }
+        
+        for repo in repositories:
+            if repo.get('fork', False):
+                continue
+                
+            repo_name = repo['name'].lower()
+            description = repo.get('description', '').lower() if repo.get('description') else ''
+            
+            # Detect frameworks based on repo name and description
+            if 'flutter' in repo_name or 'flutter' in description:
+                detected['Flutter'] = True
+            if 'react' in repo_name or 'react' in description:
+                detected['React'] = True
+            if 'node' in repo_name or 'nodejs' in description or 'node.js' in description:
+                detected['Node.js'] = True
+            if 'firebase' in repo_name or 'firebase' in description:
+                detected['Firebase'] = True
+            if 'mysql' in repo_name or 'mysql' in description or 'database' in description:
+                detected['MySQL'] = True
+            if 'android' in repo_name or 'android' in description:
+                detected['Android Studio'] = True
+        
+        return detected
+    
+    def generate_languages_and_tools_section(self, language_stats: Dict[str, float], repositories: List[Dict]) -> str:
+        """Generate the complete Languages and Tools section"""
+        if not language_stats:
+            return ""
+        
+        # Get top languages (limit to most relevant ones)
+        top_languages = dict(list(language_stats.items())[:8])
+        
+        # Generate programming languages badges
+        lang_badges = []
+        for language, _ in top_languages.items():
+            color = self.get_language_color(language)
+            badge = f'  <img src="https://img.shields.io/badge/{language}-{color}?style=for-the-badge&logo={language.lower()}&logoColor=white" alt="{language}"/>'
+            lang_badges.append(badge)
+        
+        # Detect frameworks and tools
+        frameworks = self.detect_frameworks_and_tools(repositories)
+        
+        # Generate framework badges for detected tools
+        framework_mapping = {
+            'Flutter': ('Flutter', '02569B', 'flutter'),
+            'React': ('React', '20232A', 'react'),
+            'Node.js': ('Node.js', '43853D', 'node.js'),
+            'Firebase': ('Firebase', '039BE5', 'Firebase'),
+            'MySQL': ('MySQL', '005C84', 'mysql'),
+            'Android Studio': ('Android_Studio', '3DDC84', 'android-studio')
+        }
+        
+        framework_badges = []
+        for framework, is_detected in frameworks.items():
+            if is_detected and framework in framework_mapping:
+                name, color, logo = framework_mapping[framework]
+                badge = f'  <img src="https://img.shields.io/badge/{name}-{color}?style=for-the-badge&logo={logo}&logoColor=white" alt="{framework}"/>'
+                framework_badges.append(badge)
+        
+        # Build the complete section
+        section = """<div align="center">
+
+### Programming Languages
+<p>
+""" + "\n".join(lang_badges) + """
+</p>
+
+### Frameworks & Tools
+<p>
+""" + "\n".join(framework_badges) + """
+</p>
+
+</div>"""
+        
+        return section
+    
     def generate_language_table(self, language_stats: Dict[str, float]) -> str:
         """Generate the language statistics table for README"""
         if not language_stats:
@@ -210,8 +298,8 @@ class LanguageStatsUpdater:
         
         return "\n".join(table_lines)
     
-    def update_readme(self, language_stats: Dict[str, float]) -> bool:
-        """Update the README.md file with new language statistics"""
+    def update_readme(self, language_stats: Dict[str, float], repositories: List[Dict]) -> bool:
+        """Update the README.md file with new language statistics and tools"""
         readme_path = '/home/runner/work/UniqeBd/UniqeBd/README.md'
         
         try:
@@ -221,21 +309,25 @@ class LanguageStatsUpdater:
             print("README.md not found")
             return False
         
-        # Generate new table
+        # Generate new content
         new_table = self.generate_language_table(language_stats)
-        if not new_table:
+        new_tools_section = self.generate_languages_and_tools_section(language_stats, repositories)
+        
+        if not new_table or not new_tools_section:
             print("No language statistics to update")
             return False
         
         # Find and replace the language statistics table
-        pattern = r'(\| Language\s+\| Percentage\s+\| Progress Bar \|\s*\n\|[^\n]+\|\s*\n)(.*?)(?=\n</div>)'
-        
-        # Extract just the data rows from the new table
+        table_pattern = r'(\| Language\s+\| Percentage\s+\| Progress Bar \|\s*\n\|[^\n]+\|\s*\n)(.*?)(?=\n</div>)'
         table_lines = new_table.split('\n')
-        data_rows = '\n'.join(table_lines[2:])  # Skip header and separator
-        replacement = f"\\1{data_rows}\n"
+        table_data_rows = '\n'.join(table_lines[2:])  # Skip header and separator
+        table_replacement = f"\\1{table_data_rows}\n"
+        new_content = re.sub(table_pattern, table_replacement, content, flags=re.MULTILINE | re.DOTALL)
         
-        new_content = re.sub(pattern, replacement, content, flags=re.MULTILINE | re.DOTALL)
+        # Find and replace the Languages and Tools section
+        tools_pattern = r'(## 🛠️ Languages and Tools\s*\n\s*)(.*?)(?=\n---)'
+        tools_replacement = f"\\1{new_tools_section}\n"
+        new_content = re.sub(tools_pattern, tools_replacement, new_content, flags=re.MULTILINE | re.DOTALL)
         
         # Check if content actually changed
         if new_content == content:
@@ -253,8 +345,11 @@ class LanguageStatsUpdater:
         """Main execution function"""
         print(f"Starting language statistics update for user: {self.username}")
         
-        # Calculate language statistics
-        language_stats = self.calculate_language_statistics()
+        # Get repositories first
+        repositories = self.get_user_repositories()
+        
+        # Calculate language statistics using the repositories
+        language_stats = self.calculate_language_statistics(repositories)
         
         if not language_stats:
             print("No language statistics found")
@@ -264,8 +359,8 @@ class LanguageStatsUpdater:
         for language, percentage in language_stats.items():
             print(f"  {language}: {percentage:.2f}%")
         
-        # Update README
-        self.update_readme(language_stats)
+        # Update README with both language stats and tools
+        self.update_readme(language_stats, repositories)
 
 def main():
     github_token = os.getenv('GITHUB_TOKEN')
