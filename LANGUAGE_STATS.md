@@ -1,6 +1,6 @@
 # Language Statistics Auto-Update
 
-This repository contains an automated system that updates the language usage statistics in the README.md file.
+This repository contains an automated system that updates both the language usage statistics and the "Languages and Tools" section in the README.md file.
 
 ## How it works
 
@@ -13,25 +13,42 @@ This repository contains an automated system that updates the language usage sta
    - Fetches all public repositories for the user via GitHub API
    - Analyzes language usage across all repositories (excluding forks)
    - Calculates percentage distribution of languages by bytes
-   - Updates the "Most Used Languages" table in README.md
+   - Detects frameworks and tools based on repository analysis
+   - Updates both the "Most Used Languages" table and "Languages and Tools" section in README.md
    - Commits changes if statistics have changed
 
 ## Features
 
 - **Automatic Updates**: No manual intervention needed when adding new repositories
+- **Dynamic Languages and Tools**: The "Languages and Tools" section now shows images based on actual repository data
 - **Rate Limiting**: Built-in delays to respect GitHub API rate limits
 - **Language Colors**: Maintains consistent badge colors for popular languages
 - **React Detection**: Automatically detects React projects and shows React as a separate language
-- **Top Languages**: Shows top 10 most used languages by percentage
+- **Framework Detection**: Intelligently detects frameworks like Flutter, React, Node.js, Android Studio based on repository names and descriptions
+- **Top Languages**: Shows top languages by percentage in the statistics table
+- **Smart Tool Detection**: Only shows frameworks and tools that are actually used in repositories
 - **Fork Exclusion**: Excludes forked repositories from statistics
 - **Error Handling**: Graceful handling of API errors and rate limits
+
+## Sections Updated
+
+### 🛠️ Languages and Tools
+- **Programming Languages**: Dynamically generated based on actual language usage from repositories
+- **Frameworks & Tools**: Automatically detects and displays only frameworks/tools actually used
+- **Ordered by Usage**: Languages appear in order of usage frequency
+- **Visual Consistency**: Maintains the same badge style while adding dynamic functionality
+
+### 📊 Most Used Languages
+- **Percentage Table**: Shows detailed breakdown with percentages and progress bars
+- **Top 10 Display**: Limits to most relevant languages
+- **Color-Coded**: Each language has its distinctive color
 
 ## Manual Trigger
 
 You can manually trigger the language statistics update by:
 1. Going to the Actions tab in your repository
 2. Selecting "Update Language Statistics" workflow
-3. Clicking "Run workflow"
+3. Click "Run workflow"
 
 ## Customization
 
@@ -46,6 +63,16 @@ self.language_colors = {
     'JSX': '61DAFB',          # JSX files
     # ... existing colors
 }
+```
+
+### Adding New Framework Detection
+
+Edit the `detect_frameworks_and_tools()` method to add new framework detection:
+
+```python
+# Add new framework detection logic
+if 'newframework' in repo_name or 'newframework' in description:
+    detected['NewFramework'] = True
 ```
 
 ### Changing Update Frequency
