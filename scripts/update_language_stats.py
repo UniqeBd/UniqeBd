@@ -16,7 +16,7 @@ class LanguageStatsUpdater:
         self.github_token = github_token
         self.username = username
         self.headers = {
-            'Authorization': f'token {github_token}',
+            'Authorization': f'token {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}',
             'Accept': 'application/vnd.github.v3+json'
         }
         self.base_url = 'https://api.github.com'
