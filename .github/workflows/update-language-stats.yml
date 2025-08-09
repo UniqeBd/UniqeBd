@@ -3,11 +3,13 @@ name: Update Language Statistics
 on:
   push:
     branches: [ main ]
-    paths: [ 'README.md' ]
   schedule:
-    # Run weekly on Sundays at 00:00 UTC
-    - cron: '0 0 * * 0'
+    # Run daily at 00:00 UTC for immediate detection of new repositories
+    - cron: '0 0 * * *'
   workflow_dispatch: # Allow manual triggering
+  repository_dispatch:
+    # Allow triggering from other repositories when new code is pushed
+    types: [update-stats]
 
 jobs:
   update-stats:
