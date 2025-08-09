@@ -1,21 +1,63 @@
 # Language Statistics Auto-Update
 
-This repository contains an automated system that updates both the language usage statistics and the "Languages and Tools" section in the README.md file.
+This repository contains an **enhanced automated system** that immediately detects new repositories and updates both the language usage statistics and the "Languages and Tools" section in the README.md file.
+
+## ✨ NEW: Immediate Language Detection
+
+The system now provides **immediate detection** when you create new repositories and push projects:
+
+- 🚀 **Daily Automatic Updates**: Runs every day instead of weekly for faster detection
+- 🆕 **New Repository Detection**: Automatically highlights recently created repositories  
+- ⚡ **Cross-Repository Triggers**: Other repositories can trigger immediate updates
+- 📊 **Real-time Language Analysis**: Updates progress bars as soon as new languages are detected
+- 🎯 **Smart Framework Detection**: Instantly recognizes frameworks and tools in new projects
 
 ## How it works
 
-1. **GitHub Actions Workflow**: The `.github/workflows/update-language-stats.yml` workflow triggers:
-   - When README.md is pushed to the main branch
-   - Weekly on Sundays at 00:00 UTC  
+1. **Enhanced GitHub Actions Workflow**: The `.github/workflows/update-language-stats.yml` workflow triggers:
+   - **Daily at 00:00 UTC** for immediate detection of new repositories
+   - When **any code is pushed** to the main branch (not just README.md)
+   - Via **repository_dispatch** events from other repositories
    - Manually via workflow dispatch
 
-2. **Language Analysis Script**: The `scripts/update_language_stats.py` script:
-   - Fetches all public repositories for the user via GitHub API
+2. **Enhanced Language Analysis Script**: The `scripts/update_language_stats.py` script:
+   - Fetches all public repositories sorted by most recently updated
+   - **Detects repositories created within the last 30 days**
    - Analyzes language usage across all repositories (excluding forks)
    - Calculates percentage distribution of languages by bytes
    - Detects frameworks and tools based on repository analysis
    - Updates both the "Most Used Languages" table and "Languages and Tools" section in README.md
+   - **Provides detailed logging** showing which new repositories were detected
    - Commits changes if statistics have changed
+
+## 🎯 Immediate Updates for New Repositories
+
+### Method 1: Automatic Detection (Recommended)
+- The system runs **daily** and will detect new repositories within 24 hours
+- New repositories are automatically highlighted in the logs with 🆕 indicators
+- No manual intervention required
+
+### Method 2: Manual Trigger (Instant)
+1. Go to your profile repository → Actions → "Update Language Statistics"
+2. Click "Run workflow" to trigger immediate update
+3. New languages and repositories will be detected within minutes
+
+### Method 3: Cross-Repository Automation (Advanced)
+Set up other repositories to automatically trigger updates when you push code:
+
+1. Run the setup helper:
+   ```bash
+   python scripts/setup_repo_webhook.py
+   ```
+
+2. Copy the generated action file to your other repositories:
+   ```
+   .github/workflows/trigger-language-stats.yml
+   ```
+
+3. Add a `PERSONAL_ACCESS_TOKEN` secret with repo access
+
+4. Now pushes to any configured repository will trigger immediate language stats updates!
 
 ## Features
 

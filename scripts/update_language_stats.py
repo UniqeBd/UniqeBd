@@ -47,15 +47,18 @@ class LanguageStatsUpdater:
         }
     
     def get_user_repositories(self) -> List[Dict]:
-        """Fetch all public repositories for the user"""
+        """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
         repositories = []
         page = 1
+        
+        print(f"Fetching repositories for user: {self.username}")
         
         while True:
             url = f'{self.base_url}/users/{self.username}/repos'
             params = {
                 'type': 'public',
-                'sort': 'updated',
+                'sort': 'updated',  # Sort by most recently updated first
+                'direction': 'desc',  # Newest first for immediate detection
                 'per_page': 100,
                 'page': page
             }
@@ -68,6 +71,13 @@ class LanguageStatsUpdater:
                 if not repos:
                     break
                     
+                # Log repository info for new repository detection
+                for repo in repos:
+                    repo_name = repo['name']
+                    updated_at = repo.get('updated_at', 'unknown')
+                    created_at = repo.get('created_at', 'unknown')
+                    print(f"  Found repository: {repo_name} (updated: {updated_at})")
+                    
                 repositories.extend(repos)
                 page += 1
                 
@@ -78,6 +88,7 @@ class LanguageStatsUpdater:
                 print(f"Error fetching repositories: {e}")
                 break
         
+        print(f"Total repositories found: {len(repositories)}")
         return repositories
     
     def get_repository_languages(self, repo_name: str) -> Dict[str, int]:
@@ -91,6 +102,34 @@ class LanguageStatsUpdater:
         except requests.exceptions.RequestException as e:
             print(f"Error fetching languages for {repo_name}: {e}")
             return {}
+    
+    def detect_new_repositories(self, repositories: List[Dict]) -> List[Dict]:
+        """Detect recently created repositories (within last 30 days) for immediate updates"""
+        from datetime import datetime, timezone, timedelta
+        
+        recent_repos = []
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
+        
+        for repo in repositories:
+            if repo.get('fork', False):
+                continue
+                
+            created_at_str = repo.get('created_at')
+            if created_at_str:
+                try:
+                    created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+                    if created_at > cutoff_date:
+                        recent_repos.append(repo)
+                        print(f"  🆕 New repository detected: {repo['name']} (created: {created_at_str})")
+                except ValueError:
+                    continue
+        
+        if recent_repos:
+            print(f"Found {len(recent_repos)} recently created repositories!")
+        else:
+            print("No recently created repositories found.")
+            
+        return recent_repos
     
     def is_react_project(self, repo_name: str, repo_data: Dict) -> bool:
         """Detect if a repository is a React project"""
@@ -342,25 +381,42 @@ class LanguageStatsUpdater:
         return True
     
     def run(self):
-        """Main execution function"""
-        print(f"Starting language statistics update for user: {self.username}")
+        """Main execution function with enhanced repository detection"""
+        print(f"🚀 Starting language statistics update for user: {self.username}")
+        print("=" * 50)
         
         # Get repositories first
         repositories = self.get_user_repositories()
         
-        # Calculate language statistics using the repositories
+        # Detect new repositories for immediate attention
+        print("\n🔍 Checking for recently created repositories...")
+        recent_repos = self.detect_new_repositories(repositories)
+        
+        # Calculate language statistics using all repositories
+        print(f"\n📊 Calculating language statistics across {len(repositories)} repositories...")
         language_stats = self.calculate_language_statistics(repositories)
         
         if not language_stats:
-            print("No language statistics found")
+            print("❌ No language statistics found")
             return
         
-        print("\nLanguage Statistics:")
-        for language, percentage in language_stats.items():
-            print(f"  {language}: {percentage:.2f}%")
+        print(f"\n📈 Language Statistics (Top {len(language_stats)} languages):")
+        for i, (language, percentage) in enumerate(language_stats.items(), 1):
+            print(f"  {i:2d}. {language}: {percentage:.2f}%")
         
         # Update README with both language stats and tools
-        self.update_readme(language_stats, repositories)
+        print(f"\n📝 Updating README.md with latest statistics...")
+        updated = self.update_readme(language_stats, repositories)
+        
+        if updated:
+            print("✅ README.md updated successfully!")
+            if recent_repos:
+                print(f"🎉 Included {len(recent_repos)} recently created repositories in the update!")
+        else:
+            print("ℹ️  No changes needed - statistics are already up to date")
+        
+        print("=" * 50)
+        print("🏁 Language statistics update completed")
 
 def main():
     github_token = os.getenv('GITHUB_TOKEN')
