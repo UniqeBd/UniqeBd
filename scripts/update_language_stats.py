@@ -103,7 +103,7 @@ class LanguageStatsUpdater:
         while True:
             url = f'{self.base_url}/users/{self.username}/repos'
             params = {
-                'type': 'public',
+                'type': 'all',  # Include both public and private repositories
                 'sort': 'updated',  # Sort by most recently updated first
                 'direction': 'desc',  # Newest first for immediate detection
                 'per_page': 100,
