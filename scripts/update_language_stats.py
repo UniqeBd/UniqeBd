@@ -76,6 +76,13 @@ class LanguageStatsUpdater:
         for attempt in range(max_retries):
             try:
                 response = requests.get(url, headers=self.headers, params=params, timeout=10)
+                
+                # Check rate limit
+                if response.status_code == 403 and 'rate limit' in response.text.lower():
+                    print(f"⚠️  Rate limit hit. Waiting 60 seconds...")
+                    time.sleep(60)
+                    continue
+                    
                 response.raise_for_status()
                 return response.json()
             except requests.exceptions.RequestException as e:
@@ -83,7 +90,8 @@ class LanguageStatsUpdater:
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)  # Exponential backoff
                 else:
-                    raise
+                    print(f"❌ Failed to make request after {max_retries} attempts")
+                    return {}
     
     def get_user_repositories(self) -> List[Dict]:
         """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
@@ -105,6 +113,7 @@ class LanguageStatsUpdater:
             try:
                 repos = self.make_github_request(url, params)
                 if not repos:
+                    print(f"⚠️  No repositories returned for page {page}")
                     break
                     
                 # Log repository info for new repository detection
@@ -425,13 +434,25 @@ class LanguageStatsUpdater:
         table_pattern = r'(<!-- LANG-TABLE-START -->\s*\n\| Language\s+\| Percentage\s+\| Progress Bar \|\s*\n\|[^\n]+\|\s*\n)(.*?)(\n<!-- LANG-TABLE-END -->)'
         table_lines = new_table.split('\n')
         table_data_rows = '\n'.join(table_lines[2:])  # Skip header and separator
-        table_replacement = f"\\1{table_data_rows}\\3"
-        new_content = re.sub(table_pattern, table_replacement, content, flags=re.MULTILINE | re.DOTALL)
+        
+        if re.search(table_pattern, content, flags=re.MULTILINE | re.DOTALL):
+            table_replacement = f"\\1{table_data_rows}\\3"
+            new_content = re.sub(table_pattern, table_replacement, content, flags=re.MULTILINE | re.DOTALL)
+            print("✅ Successfully updated language table")
+        else:
+            print("⚠️  Could not find language table section with markers")
+            return False
         
         # Find and replace the Languages and Tools section using HTML markers
         tools_pattern = r'(<!-- LANG-TOOLS-START -->\s*\n)(.*?)(\n<!-- LANG-TOOLS-END -->)'
-        tools_replacement = f"\\1{new_tools_section}\\3"
-        new_content = re.sub(tools_pattern, tools_replacement, new_content, flags=re.MULTILINE | re.DOTALL)
+        
+        if re.search(tools_pattern, new_content, flags=re.MULTILINE | re.DOTALL):
+            tools_replacement = f"\\1{new_tools_section}\\3"
+            new_content = re.sub(tools_pattern, tools_replacement, new_content, flags=re.MULTILINE | re.DOTALL)
+            print("✅ Successfully updated languages and tools section")
+        else:
+            print("⚠️  Could not find languages and tools section with markers")
+            return False
         
         # Check if content actually changed
         if new_content == content:
@@ -467,7 +488,11 @@ class LanguageStatsUpdater:
             language_stats = self.calculate_language_statistics(repositories)
             
             if not language_stats:
-                print("❌ No language statistics found")
+                print("⚠️  No language statistics calculated - this might be due to:")
+                print("   - All repositories are forks (excluded from stats)")
+                print("   - API rate limiting")
+                print("   - Network connectivity issues")
+                print("   - Empty repositories with no detectable languages")
                 return
             
             print(f"\n📈 Language Statistics (Top {min(len(language_stats), 10)} languages):")

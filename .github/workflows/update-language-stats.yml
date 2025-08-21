@@ -32,7 +32,12 @@ jobs:
         pip install -r requirements.txt
     
     - name: Update language statistics
-      run: python scripts/update_language_stats.py
+      run: |
+        echo "🚀 Starting language statistics update..."
+        echo "Repository: ${{ github.repository }}"
+        echo "Username: ${{ github.repository_owner }}"
+        echo "Workspace: $GITHUB_WORKSPACE"
+        python scripts/update_language_stats.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
