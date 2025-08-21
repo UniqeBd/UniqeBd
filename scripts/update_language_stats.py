@@ -180,9 +180,9 @@ class LanguageStatsUpdater:
         if 'react' in repo_name.lower():
             return True
             
-        # Check if repository description mentions React
-        description = repo_data.get('description', '').lower()
-        if 'react' in description:
+        # Check if repository description mentions React (handle None description)
+        description = repo_data.get('description') or ''
+        if 'react' in description.lower():
             return True
             
         # For comprehensive detection, we could check for package.json with React deps
@@ -284,7 +284,7 @@ class LanguageStatsUpdater:
                 continue
                 
             repo_name = repo['name'].lower()
-            description = repo.get('description', '').lower() if repo.get('description') else ''
+            description = (repo.get('description') or '').lower()
             topics = repo.get('topics', []) if repo.get('topics') else []
             
             # Convert topics to lowercase for comparison

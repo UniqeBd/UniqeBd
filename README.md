@@ -31,24 +31,20 @@
 
 ### Programming Languages
 <p>
-  <img src="https://img.shields.io/badge/TeX-008080?style=for-the-badge&logo=latex&logoColor=white" alt="TeX"/>
-  <img src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML5"/>
+  <img src="https://img.shields.io/badge/HTML-E34F26?style=for-the-badge&logo=html5&logoColor=white" alt="HTML"/>
+  <img src="https://img.shields.io/badge/CSS-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS"/>
   <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart"/>
-  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript"/>
-  <img src="https://img.shields.io/badge/C++-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++"/>
-  <img src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white" alt="CSS3"/>
+  <img src="https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white" alt="PHP"/>
+  <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white" alt="JavaScript"/>
   <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
-  <img src="https://img.shields.io/badge/Kotlin-0095D5?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin"/>
+  <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" alt="C++"/>
+  <img src="https://img.shields.io/badge/CMake-808080?style=for-the-badge&logo=cmake&logoColor=white" alt="CMake"/>
 </p>
 
 ### Frameworks & Tools
 <p>
   <img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"/>
-  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React"/>
-  <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js"/>
-  <img src="https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white" alt="Firebase"/>
-  <img src="https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL"/>
-  <img src="https://img.shields.io/badge/Android_Studio-3DDC84?style=for-the-badge&logo=android-studio&logoColor=white" alt="Android Studio"/>
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=white" alt="React"/>
 </p>
 
 </div>
@@ -63,13 +59,16 @@
 <!-- LANG-TABLE-START -->
 | Language   | Percentage | Progress Bar |
 |------------|------------|--------------|
-| TeX        | 40.14%     | ![TeX](https://img.shields.io/badge/TeX-40.14%25-008080?style=flat-square) |
-| HTML       | 18.51%     | ![HTML](https://img.shields.io/badge/HTML-18.51%25-E34F26?style=flat-square) |
-| Dart       | 15.47%     | ![Dart](https://img.shields.io/badge/Dart-15.47%25-0175C2?style=flat-square) |
-| React      | 9.85%      | ![React](https://img.shields.io/badge/React-9.85%25-61DAFB?style=flat-square) |
-| JavaScript | 7.89%      | ![JavaScript](https://img.shields.io/badge/JavaScript-7.89%25-F7DF1E?style=flat-square&labelColor=black) |
-| C++        | 4.31%      | ![C++](https://img.shields.io/badge/C++-4.31%25-00599C?style=flat-square) |
-| CSS        | 3.83%      | ![CSS](https://img.shields.io/badge/CSS-3.83%25-1572B6?style=flat-square) |
+| HTML       | 32.30%     | ![HTML](https://img.shields.io/badge/HTML-32.30%25-E34F26?style=flat-square) |
+| CSS        | 19.01%     | ![CSS](https://img.shields.io/badge/CSS-19.01%25-1572B6?style=flat-square) |
+| Dart       | 16.90%     | ![Dart](https://img.shields.io/badge/Dart-16.90%25-0175C2?style=flat-square) |
+| PHP        | 13.15%     | ![PHP](https://img.shields.io/badge/PHP-13.15%25-777BB4?style=flat-square) |
+| JavaScript | 10.45%     | ![JavaScript](https://img.shields.io/badge/JavaScript-10.45%25-F7DF1E?style=flat-square&labelColor=black) |
+| Python     | 2.89%      | ![Python](https://img.shields.io/badge/Python-2.89%25-3776AB?style=flat-square) |
+| C++        | 2.67%      | ![C++](https://img.shields.io/badge/C%2B%2B-2.67%25-00599C?style=flat-square) |
+| CMake      | 2.06%      | ![CMake](https://img.shields.io/badge/CMake-2.06%25-808080?style=flat-square) |
+| Swift      | 0.34%      | ![Swift](https://img.shields.io/badge/Swift-0.34%25-FA7343?style=flat-square) |
+| C          | 0.15%      | ![C](https://img.shields.io/badge/C-0.15%25-555555?style=flat-square) |
 <!-- LANG-TABLE-END -->
 
 </div>
