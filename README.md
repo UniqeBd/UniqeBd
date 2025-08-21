@@ -26,6 +26,7 @@
 
 ## 🛠️ Languages and Tools
 
+<!-- LANG-TOOLS-START -->
 <div align="center">
 
 ### Programming Languages
@@ -51,6 +52,7 @@
 </p>
 
 </div>
+<!-- LANG-TOOLS-END -->
 
 ---
 
@@ -58,6 +60,7 @@
 
 <div align="center">
 
+<!-- LANG-TABLE-START -->
 | Language   | Percentage | Progress Bar |
 |------------|------------|--------------|
 | TeX        | 40.14%     | ![TeX](https://img.shields.io/badge/TeX-40.14%25-008080?style=flat-square) |
@@ -67,6 +70,7 @@
 | JavaScript | 7.89%      | ![JavaScript](https://img.shields.io/badge/JavaScript-7.89%25-F7DF1E?style=flat-square&labelColor=black) |
 | C++        | 4.31%      | ![C++](https://img.shields.io/badge/C++-4.31%25-00599C?style=flat-square) |
 | CSS        | 3.83%      | ![CSS](https://img.shields.io/badge/CSS-3.83%25-1572B6?style=flat-square) |
+<!-- LANG-TABLE-END -->
 
 </div>
 

@@ -7,8 +7,7 @@ Fetches language data from all public repositories and calculates percentages
 import os
 import re
 import requests
-import json
-from typing import Dict, List, Tuple
+from typing import Dict, List
 import time
 
 class LanguageStatsUpdater:
@@ -45,6 +44,46 @@ class LanguageStatsUpdater:
             'React': '61DAFB',
             'JSX': '61DAFB'
         }
+        
+        # Logo slug mapping for shields.io badges
+        self.logo_slugs = {
+            'TeX': 'latex',
+            'HTML': 'html5',
+            'Dart': 'dart',
+            'JavaScript': 'javascript',
+            'C++': 'cplusplus',
+            'CSS': 'css3',
+            'Python': 'python',
+            'Java': 'java',
+            'TypeScript': 'typescript',
+            'Kotlin': 'kotlin',
+            'Swift': 'swift',
+            'Go': 'go',
+            'Rust': 'rust',
+            'PHP': 'php',
+            'C': 'c',
+            'C#': 'csharp',
+            'Shell': 'gnubash',
+            'Vue': 'vuedotjs',
+            'Ruby': 'ruby',
+            'React': 'react',
+            'JSX': 'react'
+        }
+    
+    def make_github_request(self, url: str, params: dict = None) -> dict:
+        """Make a GitHub API request with retry logic"""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(url, headers=self.headers, params=params, timeout=10)
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                print(f"Request failed (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    raise
     
     def get_user_repositories(self) -> List[Dict]:
         """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
@@ -64,10 +103,7 @@ class LanguageStatsUpdater:
             }
             
             try:
-                response = requests.get(url, headers=self.headers, params=params)
-                response.raise_for_status()
-                
-                repos = response.json()
+                repos = self.make_github_request(url, params)
                 if not repos:
                     break
                     
@@ -96,9 +132,7 @@ class LanguageStatsUpdater:
         url = f'{self.base_url}/repos/{self.username}/{repo_name}/languages'
         
         try:
-            response = requests.get(url, headers=self.headers)
-            response.raise_for_status()
-            return response.json()
+            return self.make_github_request(url)
         except requests.exceptions.RequestException as e:
             print(f"Error fetching languages for {repo_name}: {e}")
             return {}
@@ -165,17 +199,18 @@ class LanguageStatsUpdater:
             
             languages = self.get_repository_languages(repo_name)
             
-            # Check if this is a React project
+            # Check if this is a React project and React conversion is enabled
+            react_conversion_percent = int(os.getenv('REACT_JS_ALLOCATION_PERCENT', '0'))
             is_react = self.is_react_project(repo_name, repo)
             
-            if is_react and 'JavaScript' in languages:
+            if is_react and 'JavaScript' in languages and react_conversion_percent > 0:
                 # For React projects, convert a portion of JavaScript to React
                 js_bytes = languages['JavaScript']
-                # Assume 60% of JavaScript in React projects is actually React code
-                react_bytes = int(js_bytes * 0.6)
+                # Use configurable percentage (default 0% = disabled)
+                react_bytes = int(js_bytes * (react_conversion_percent / 100))
                 remaining_js = js_bytes - react_bytes
                 
-                print(f"  Detected React project! Converting {react_bytes} bytes to React")
+                print(f"  Detected React project! Converting {react_bytes} bytes ({react_conversion_percent}%) to React")
                 
                 # Add React bytes
                 if 'React' not in language_totals:
@@ -195,7 +230,7 @@ class LanguageStatsUpdater:
                             language_totals[language] = 0
                         language_totals[language] += bytes_count
             else:
-                # Add all languages as-is for non-React projects
+                # Add all languages as-is for non-React projects or when conversion is disabled
                 for language, bytes_count in languages.items():
                     if language not in language_totals:
                         language_totals[language] = 0
@@ -241,19 +276,40 @@ class LanguageStatsUpdater:
                 
             repo_name = repo['name'].lower()
             description = repo.get('description', '').lower() if repo.get('description') else ''
+            topics = repo.get('topics', []) if repo.get('topics') else []
             
-            # Detect frameworks based on repo name and description
-            if 'flutter' in repo_name or 'flutter' in description:
+            # Convert topics to lowercase for comparison
+            topics_lower = [topic.lower() for topic in topics]
+            
+            # Detect frameworks based on repo name, description, and topics
+            if any(keyword in repo_name for keyword in ['flutter']) or \
+               any(keyword in description for keyword in ['flutter']) or \
+               'flutter' in topics_lower:
                 detected['Flutter'] = True
-            if 'react' in repo_name or 'react' in description:
+                
+            if any(keyword in repo_name for keyword in ['react']) or \
+               any(keyword in description for keyword in ['react']) or \
+               'react' in topics_lower:
                 detected['React'] = True
-            if 'node' in repo_name or 'nodejs' in description or 'node.js' in description:
+                
+            if any(keyword in repo_name for keyword in ['node', 'nodejs']) or \
+               any(keyword in description for keyword in ['node.js', 'nodejs', 'node js']) or \
+               any(topic in topics_lower for topic in ['nodejs', 'node']):
                 detected['Node.js'] = True
-            if 'firebase' in repo_name or 'firebase' in description:
+                
+            if any(keyword in repo_name for keyword in ['firebase']) or \
+               any(keyword in description for keyword in ['firebase']) or \
+               'firebase' in topics_lower:
                 detected['Firebase'] = True
-            if 'mysql' in repo_name or 'mysql' in description or 'database' in description:
+                
+            if any(keyword in repo_name for keyword in ['mysql']) or \
+               any(keyword in description for keyword in ['mysql']) or \
+               'mysql' in topics_lower:
                 detected['MySQL'] = True
-            if 'android' in repo_name or 'android' in description:
+                
+            if any(keyword in repo_name for keyword in ['android']) or \
+               any(keyword in description for keyword in ['android']) or \
+               'android' in topics_lower:
                 detected['Android Studio'] = True
         
         return detected
@@ -270,7 +326,10 @@ class LanguageStatsUpdater:
         lang_badges = []
         for language, _ in top_languages.items():
             color = self.get_language_color(language)
-            badge = f'  <img src="https://img.shields.io/badge/{language}-{color}?style=for-the-badge&logo={language.lower()}&logoColor=white" alt="{language}"/>'
+            logo = self.logo_slugs.get(language, language.lower())
+            # URL encode the language name for the badge
+            encoded_lang = language.replace('+', '%2B').replace('#', '%23').replace(' ', '%20')
+            badge = f'  <img src="https://img.shields.io/badge/{encoded_lang}-{color}?style=for-the-badge&logo={logo}&logoColor=white" alt="{language}"/>'
             lang_badges.append(badge)
         
         # Detect frameworks and tools
@@ -327,11 +386,15 @@ class LanguageStatsUpdater:
             color = self.get_language_color(language)
             percentage_str = f"{percentage:.2f}%"
             
+            # URL encode the language name and percentage for the badge
+            encoded_lang = language.replace('+', '%2B').replace('#', '%23').replace(' ', '%20')
+            encoded_percentage = percentage_str.replace('%', '%25')
+            
             # Create badge with appropriate label color
             if language == 'JavaScript':
-                badge = f"![{language}](https://img.shields.io/badge/{language}-{percentage_str.replace('%', '%25')}-{color}?style=flat-square&labelColor=black)"
+                badge = f"![{language}](https://img.shields.io/badge/{encoded_lang}-{encoded_percentage}-{color}?style=flat-square&labelColor=black)"
             else:
-                badge = f"![{language}](https://img.shields.io/badge/{language}-{percentage_str.replace('%', '%25')}-{color}?style=flat-square)"
+                badge = f"![{language}](https://img.shields.io/badge/{encoded_lang}-{encoded_percentage}-{color}?style=flat-square)"
             
             table_lines.append(f"| {language:<10} | {percentage_str:<10} | {badge} |")
         
@@ -339,13 +402,15 @@ class LanguageStatsUpdater:
     
     def update_readme(self, language_stats: Dict[str, float], repositories: List[Dict]) -> bool:
         """Update the README.md file with new language statistics and tools"""
-        readme_path = '/home/runner/work/UniqeBd/UniqeBd/README.md'
+        # Use portable path that works locally and in CI
+        workspace = os.getenv('GITHUB_WORKSPACE', '.')
+        readme_path = os.path.join(workspace, 'README.md')
         
         try:
             with open(readme_path, 'r', encoding='utf-8') as file:
                 content = file.read()
         except FileNotFoundError:
-            print("README.md not found")
+            print(f"README.md not found at {readme_path}")
             return False
         
         # Generate new content
@@ -356,16 +421,16 @@ class LanguageStatsUpdater:
             print("No language statistics to update")
             return False
         
-        # Find and replace the language statistics table
-        table_pattern = r'(\| Language\s+\| Percentage\s+\| Progress Bar \|\s*\n\|[^\n]+\|\s*\n)(.*?)(?=\n</div>)'
+        # Find and replace the language statistics table using HTML markers
+        table_pattern = r'(<!-- LANG-TABLE-START -->\s*\n\| Language\s+\| Percentage\s+\| Progress Bar \|\s*\n\|[^\n]+\|\s*\n)(.*?)(\n<!-- LANG-TABLE-END -->)'
         table_lines = new_table.split('\n')
         table_data_rows = '\n'.join(table_lines[2:])  # Skip header and separator
-        table_replacement = f"\\1{table_data_rows}\n"
+        table_replacement = f"\\1{table_data_rows}\\3"
         new_content = re.sub(table_pattern, table_replacement, content, flags=re.MULTILINE | re.DOTALL)
         
-        # Find and replace the Languages and Tools section
-        tools_pattern = r'(## 🛠️ Languages and Tools\s*\n\s*)(.*?)(?=\n---)'
-        tools_replacement = f"\\1{new_tools_section}\n"
+        # Find and replace the Languages and Tools section using HTML markers
+        tools_pattern = r'(<!-- LANG-TOOLS-START -->\s*\n)(.*?)(\n<!-- LANG-TOOLS-END -->)'
+        tools_replacement = f"\\1{new_tools_section}\\3"
         new_content = re.sub(tools_pattern, tools_replacement, new_content, flags=re.MULTILINE | re.DOTALL)
         
         # Check if content actually changed
@@ -382,41 +447,50 @@ class LanguageStatsUpdater:
     
     def run(self):
         """Main execution function with enhanced repository detection"""
-        print(f"🚀 Starting language statistics update for user: {self.username}")
-        print("=" * 50)
-        
-        # Get repositories first
-        repositories = self.get_user_repositories()
-        
-        # Detect new repositories for immediate attention
-        print("\n🔍 Checking for recently created repositories...")
-        recent_repos = self.detect_new_repositories(repositories)
-        
-        # Calculate language statistics using all repositories
-        print(f"\n📊 Calculating language statistics across {len(repositories)} repositories...")
-        language_stats = self.calculate_language_statistics(repositories)
-        
-        if not language_stats:
-            print("❌ No language statistics found")
-            return
-        
-        print(f"\n📈 Language Statistics (Top {len(language_stats)} languages):")
-        for i, (language, percentage) in enumerate(language_stats.items(), 1):
-            print(f"  {i:2d}. {language}: {percentage:.2f}%")
-        
-        # Update README with both language stats and tools
-        print(f"\n📝 Updating README.md with latest statistics...")
-        updated = self.update_readme(language_stats, repositories)
-        
-        if updated:
-            print("✅ README.md updated successfully!")
-            if recent_repos:
-                print(f"🎉 Included {len(recent_repos)} recently created repositories in the update!")
-        else:
-            print("ℹ️  No changes needed - statistics are already up to date")
-        
-        print("=" * 50)
-        print("🏁 Language statistics update completed")
+        try:
+            print(f"🚀 Starting language statistics update for user: {self.username}")
+            print("=" * 50)
+            
+            # Get repositories first
+            repositories = self.get_user_repositories()
+            
+            if not repositories:
+                print("❌ No repositories found")
+                return
+            
+            # Detect new repositories for immediate attention
+            print("\n🔍 Checking for recently created repositories...")
+            recent_repos = self.detect_new_repositories(repositories)
+            
+            # Calculate language statistics using all repositories
+            print(f"\n📊 Calculating language statistics across {len(repositories)} repositories...")
+            language_stats = self.calculate_language_statistics(repositories)
+            
+            if not language_stats:
+                print("❌ No language statistics found")
+                return
+            
+            print(f"\n📈 Language Statistics (Top {min(len(language_stats), 10)} languages):")
+            for i, (language, percentage) in enumerate(list(language_stats.items())[:10], 1):
+                print(f"  {i:2d}. {language}: {percentage:.2f}%")
+            
+            # Update README with both language stats and tools
+            print(f"\n📝 Updating README.md with latest statistics...")
+            updated = self.update_readme(language_stats, repositories)
+            
+            if updated:
+                print("✅ README.md updated successfully!")
+                if recent_repos:
+                    print(f"🎉 Included {len(recent_repos)} recently created repositories in the update!")
+            else:
+                print("ℹ️  No changes needed - statistics are already up to date")
+            
+            print("=" * 50)
+            print("🏁 Language statistics update completed")
+            
+        except Exception as e:
+            print(f"❌ Fatal error during execution: {e}")
+            raise
 
 def main():
     github_token = os.getenv('GITHUB_TOKEN')

@@ -2,11 +2,21 @@
 
 This repository contains an **enhanced automated system** that immediately detects new repositories and updates both the language usage statistics and the "Languages and Tools" section in the README.md file.
 
-## ✨ NEW: Immediate Language Detection
+## 🆕 Latest Updates & Fixes
+
+- ✅ **Fixed workflow failures**: Resolved path issues that caused daily job failures
+- ✅ **Cross-platform compatibility**: Works on Windows, macOS, and Linux
+- ✅ **Robust error handling**: Added retry logic and better error messages
+- ✅ **Improved badge generation**: Fixed logo slugs and URL encoding for special characters
+- ✅ **Configurable React detection**: Set `REACT_JS_ALLOCATION_PERCENT` (default: 0 = disabled)
+- ✅ **Enhanced framework detection**: Uses repository topics for better accuracy
+- ✅ **HTML marker-based updates**: More reliable README section replacement
+
+## ✨ Immediate Language Detection Features
 
 The system now provides **immediate detection** when you create new repositories and push projects:
 
-- 🚀 **Daily Automatic Updates**: Runs every day instead of weekly for faster detection
+- 🚀 **Daily Automatic Updates**: Runs every day for faster detection
 - 🆕 **New Repository Detection**: Automatically highlights recently created repositories  
 - ⚡ **Cross-Repository Triggers**: Other repositories can trigger immediate updates
 - 📊 **Real-time Language Analysis**: Updates progress bars as soon as new languages are detected
@@ -16,7 +26,7 @@ The system now provides **immediate detection** when you create new repositories
 
 1. **Enhanced GitHub Actions Workflow**: The `.github/workflows/update-language-stats.yml` workflow triggers:
    - **Daily at 00:00 UTC** for immediate detection of new repositories
-   - When **any code is pushed** to the main branch (not just README.md)
+   - When **any code is pushed** to the main branch
    - Via **repository_dispatch** events from other repositories
    - Manually via workflow dispatch
 
@@ -30,7 +40,7 @@ The system now provides **immediate detection** when you create new repositories
    - **Provides detailed logging** showing which new repositories were detected
    - Commits changes if statistics have changed
 
-## 🎯 Immediate Updates for New Repositories
+## 🎯 Quick Setup for New Repositories
 
 ### Method 1: Automatic Detection (Recommended)
 - The system runs **daily** and will detect new repositories within 24 hours
@@ -58,6 +68,35 @@ Set up other repositories to automatically trigger updates when you push code:
 3. Add a `PERSONAL_ACCESS_TOKEN` secret with repo access
 
 4. Now pushes to any configured repository will trigger immediate language stats updates!
+
+## 🔧 Local Development
+
+For local testing and development:
+
+1. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Set environment variables**:
+   ```bash
+   export GITHUB_TOKEN=your_github_token
+   export GITHUB_USERNAME=UniqeBd
+   # Optional: Enable React detection (percentage of JS to convert to React)
+   export REACT_JS_ALLOCATION_PERCENT=60
+   ```
+
+3. **Run the script**:
+   ```bash
+   python scripts/update_language_stats.py
+   ```
+
+## Configuration Options
+
+- `REACT_JS_ALLOCATION_PERCENT`: Percentage of JavaScript to convert to React in detected React projects (default: 0 = disabled)
+- `GITHUB_TOKEN`: Your GitHub personal access token
+- `GITHUB_USERNAME`: Your GitHub username
+- `GITHUB_WORKSPACE`: Workspace directory (auto-detected in CI)
 
 ## Features
 

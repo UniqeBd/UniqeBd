@@ -5,8 +5,7 @@ This script helps configure repository webhooks to trigger immediate updates.
 """
 
 import os
-import requests
-import json
+import tempfile
 
 def create_webhook_action_file():
     """Create a GitHub Action file that can be added to other repositories"""
@@ -31,12 +30,16 @@ jobs:
           -d '{"event_type":"update-stats","client_payload":{"repository":"${{ github.repository }}","ref":"${{ github.ref }}"}}'
 """
     
-    os.makedirs('/tmp/webhook-setup', exist_ok=True)
-    with open('/tmp/webhook-setup/trigger-language-stats.yml', 'w') as f:
+    # Use cross-platform temporary directory
+    temp_dir = os.path.join(tempfile.gettempdir(), 'webhook-setup')
+    os.makedirs(temp_dir, exist_ok=True)
+    
+    action_file_path = os.path.join(temp_dir, 'trigger-language-stats.yml')
+    with open(action_file_path, 'w') as f:
         f.write(action_content)
     
     print("✅ Created trigger-language-stats.yml action file")
-    print("📁 Location: /tmp/webhook-setup/trigger-language-stats.yml")
+    print(f"📁 Location: {action_file_path}")
     print()
     print("📋 To use this in your other repositories:")
     print("1. Copy this file to .github/workflows/ in your other repositories")
@@ -76,13 +79,18 @@ else
 fi
 """
     
-    with open('/tmp/webhook-setup/trigger_update.sh', 'w') as f:
+    temp_dir = os.path.join(tempfile.gettempdir(), 'webhook-setup')
+    script_file_path = os.path.join(temp_dir, 'trigger_update.sh')
+    
+    with open(script_file_path, 'w') as f:
         f.write(script_content)
     
-    os.chmod('/tmp/webhook-setup/trigger_update.sh', 0o755)
+    # Make executable on Unix-like systems
+    if os.name != 'nt':
+        os.chmod(script_file_path, 0o755)
     
     print("✅ Created manual trigger script")
-    print("📁 Location: /tmp/webhook-setup/trigger_update.sh")
+    print(f"📁 Location: {script_file_path}")
     print()
     print("📋 To use this script:")
     print("1. Set your GITHUB_TOKEN environment variable")
