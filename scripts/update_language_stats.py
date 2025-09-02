@@ -626,9 +626,10 @@ def main():
     github_token = os.getenv('GITHUB_TOKEN')
     username = os.getenv('GITHUB_USERNAME')
     
+    # Allow empty token for unauthenticated access
     if not github_token:
-        print("Error: GITHUB_TOKEN environment variable not set")
-        return 1
+        print("⚠️  No GITHUB_TOKEN provided, using unauthenticated access")
+        github_token = ""
     
     if not username:
         print("Error: GITHUB_USERNAME environment variable not set")
