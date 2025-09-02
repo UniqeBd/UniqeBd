@@ -1,0 +1,145 @@
+name: Test Language Statistics Update
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      dry_run:
+        description: 'Run in dry-run mode (no commits/PRs)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  test-update:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Debug environment
+      run: |
+        echo "🔍 Environment Debug Information:"
+        echo "Repository: ${{ github.repository }}"
+        echo "Username: ${{ github.repository_owner }}"
+        echo "Workspace: $GITHUB_WORKSPACE"
+        echo "Dry run mode: ${{ github.event.inputs.dry_run }}"
+        echo "Token available: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}"
+        echo "Built-in token available: ${{ github.token != '' }}"
+        
+    - name: Test language statistics update
+      id: test-stats
+      run: |
+        echo "🧪 Testing language statistics update..."
+        
+        # Run the Python script with error handling
+        if python scripts/update_language_stats.py; then
+          echo "✅ Language statistics test successful"
+          echo "test_success=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Language statistics test failed"
+          echo "test_success=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+        GITHUB_USERNAME: ${{ github.repository_owner }}
+    
+    - name: Check for changes
+      id: check-changes
+      if: steps.test-stats.outputs.test_success == 'true'
+      run: |
+        git add README.md
+        
+        if git diff --staged --quiet; then
+          echo "No changes detected"
+          echo "has_changes=false" >> $GITHUB_OUTPUT
+        else
+          echo "Changes detected in README.md"
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          
+          # Show the diff for debugging
+          echo "📝 Changes made:"
+          git diff --staged README.md
+        fi
+    
+    - name: Create test PR (if not dry run)
+      if: |
+        steps.test-stats.outputs.test_success == 'true' && 
+        steps.check-changes.outputs.has_changes == 'true' && 
+        github.event.inputs.dry_run != 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action Test"
+        
+        # Create a unique test branch
+        BRANCH_NAME="test-update-stats-$(date +%Y%m%d-%H%M%S)"
+        echo "Creating test branch: $BRANCH_NAME"
+        
+        git checkout -b "$BRANCH_NAME"
+        git commit -m "🧪 Test: Auto-update language statistics"
+        
+        # Push the branch
+        git push origin "$BRANCH_NAME"
+        
+        # Create test PR using GitHub CLI
+        gh pr create \
+          --title "🧪 TEST: Auto-update language statistics" \
+          --body "**⚠️ THIS IS A TEST PR - Safe to close after review**
+
+🧪 **Test Results:**
+- ✅ Language statistics script executed successfully
+- ✅ Changes detected and committed
+- ✅ PR creation workflow working
+
+📊 **Changes included:**
+- Updated language percentages
+- Refreshed repository statistics  
+- Updated technology badges
+
+🤖 This is a test PR created to verify the language statistics workflow is working correctly.
+🗑️ You can safely close this PR after confirming everything looks good." \
+          --head "$BRANCH_NAME" \
+          --base "main" \
+          --label "test,automated"
+      env:
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+    
+    - name: Dry run summary
+      if: github.event.inputs.dry_run == 'true'
+      run: |
+        echo "🏁 DRY RUN COMPLETED"
+        echo "================================"
+        echo "Test success: ${{ steps.test-stats.outputs.test_success }}"
+        echo "Has changes: ${{ steps.check-changes.outputs.has_changes }}"
+        echo "No commits or PRs created (dry run mode)"
+    
+    - name: Test summary
+      if: github.event.inputs.dry_run != 'true'
+      run: |
+        echo "🏁 TEST COMPLETED"
+        echo "================================"
+        echo "Test success: ${{ steps.test-stats.outputs.test_success }}"
+        echo "Has changes: ${{ steps.check-changes.outputs.has_changes }}"
+        if [[ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]]; then
+          echo "✅ Test PR created successfully"
+        else
+          echo "ℹ️  No changes detected, no PR needed"
+        fi
