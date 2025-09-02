@@ -59,14 +59,14 @@
 <!-- LANG-TABLE-START -->
 | Language   | Percentage | Progress Bar |
 |------------|------------|--------------|
-| HTML       | 30.88%     | ![HTML](https://img.shields.io/badge/HTML-30.88%25-E34F26?style=flat-square) |
-| CSS        | 19.39%     | ![CSS](https://img.shields.io/badge/CSS-19.39%25-1572B6?style=flat-square) |
-| JavaScript | 16.16%     | ![JavaScript](https://img.shields.io/badge/JavaScript-16.16%25-F7DF1E?style=flat-square&labelColor=black) |
-| Dart       | 14.61%     | ![Dart](https://img.shields.io/badge/Dart-14.61%25-0175C2?style=flat-square) |
-| PHP        | 11.37%     | ![PHP](https://img.shields.io/badge/PHP-11.37%25-777BB4?style=flat-square) |
-| Python     | 2.72%      | ![Python](https://img.shields.io/badge/Python-2.72%25-3776AB?style=flat-square) |
+| HTML       | 30.80%     | ![HTML](https://img.shields.io/badge/HTML-30.80%25-E34F26?style=flat-square) |
+| CSS        | 19.33%     | ![CSS](https://img.shields.io/badge/CSS-19.33%25-1572B6?style=flat-square) |
+| JavaScript | 16.11%     | ![JavaScript](https://img.shields.io/badge/JavaScript-16.11%25-F7DF1E?style=flat-square&labelColor=black) |
+| Dart       | 14.57%     | ![Dart](https://img.shields.io/badge/Dart-14.57%25-0175C2?style=flat-square) |
+| PHP        | 11.34%     | ![PHP](https://img.shields.io/badge/PHP-11.34%25-777BB4?style=flat-square) |
+| Python     | 2.99%      | ![Python](https://img.shields.io/badge/Python-2.99%25-3776AB?style=flat-square) |
 | C++        | 2.30%      | ![C++](https://img.shields.io/badge/C%2B%2B-2.30%25-00599C?style=flat-square) |
-| CMake      | 1.78%      | ![CMake](https://img.shields.io/badge/CMake-1.78%25-808080?style=flat-square) |
+| CMake      | 1.77%      | ![CMake](https://img.shields.io/badge/CMake-1.77%25-808080?style=flat-square) |
 | Swift      | 0.29%      | ![Swift](https://img.shields.io/badge/Swift-0.29%25-FA7343?style=flat-square) |
 | PowerShell | 0.16%      | ![PowerShell](https://img.shields.io/badge/PowerShell-0.16%25-808080?style=flat-square) |
 <!-- LANG-TABLE-END -->

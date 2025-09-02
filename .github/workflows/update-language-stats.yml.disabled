@@ -105,9 +105,9 @@ jobs:
           --title "🤖 Auto-update language statistics" \
           --body "Automated update of language statistics and repository data.
 
-📊 **Changes included:**
+📊 Changes included:
 - Updated language percentages
-- Refreshed repository statistics  
+- Refreshed repository statistics
 - Updated technology badges
 
 🤖 This PR was automatically created by the language statistics workflow.
