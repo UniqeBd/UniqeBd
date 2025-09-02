@@ -1,12 +1,17 @@
 name: Simple Language Statistics Update
 
 on:
-  workflow_dispatch: # Manual trigger only
+  workflow_dispatch: # This enables the "Run workflow" button
     inputs:
       include_private:
-        description: 'Include private repositories (requires PERSONAL_ACCESS_TOKEN secret)'
+        description: 'Include private repositories'
         required: false
-        default: 'false'
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Dry run (test without making changes)'
+        required: false
+        default: false
         type: boolean
   schedule:
     # Run weekly instead of daily to reduce API usage
