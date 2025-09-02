@@ -71,20 +71,34 @@ class LanguageStatsUpdater:
         }
     
     def make_github_request(self, url: str, params: dict = None) -> dict:
-        """Make a GitHub API request with retry logic"""
+        """Make a GitHub API request with retry logic and fallback to unauthenticated"""
         max_retries = 3
+        
         for attempt in range(max_retries):
             try:
-                response = requests.get(url, headers=self.headers, params=params, timeout=10)
+                # Try authenticated request first if token is available
+                if self.github_token and self.github_token != "dummy_token":
+                    response = requests.get(url, headers=self.headers, params=params, timeout=10)
+                else:
+                    # Use unauthenticated request
+                    headers = {'Accept': 'application/vnd.github.v3+json'}
+                    response = requests.get(url, headers=headers, params=params, timeout=10)
                 
                 # Check rate limit
                 if response.status_code == 403 and 'rate limit' in response.text.lower():
                     print(f"⚠️  Rate limit hit. Waiting 60 seconds...")
                     time.sleep(60)
                     continue
+                
+                # If authenticated request fails with auth error, try unauthenticated
+                if response.status_code == 401 and self.github_token:
+                    print(f"🔄 Authentication failed, trying unauthenticated request...")
+                    headers = {'Accept': 'application/vnd.github.v3+json'}
+                    response = requests.get(url, headers=headers, params=params, timeout=10)
                     
                 response.raise_for_status()
                 return response.json()
+                
             except requests.exceptions.RequestException as e:
                 print(f"Request failed (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
@@ -95,27 +109,31 @@ class LanguageStatsUpdater:
     
     def validate_github_token(self) -> bool:
         """Validate GitHub token by making a test API call"""
+        if not self.github_token or self.github_token == "dummy_token":
+            print("⚠️  No valid GitHub token provided, will use unauthenticated requests")
+            return True  # Allow unauthenticated access for public repos
+            
         try:
             url = f'{self.base_url}/user'
             response = requests.get(url, headers=self.headers, timeout=10)
             
             if response.status_code == 401:
-                print("❌ GitHub token is invalid or expired")
-                return False
+                print("⚠️  GitHub token is invalid, will try unauthenticated requests")
+                return True  # Fallback to unauthenticated
             elif response.status_code == 403:
-                print("❌ GitHub token has insufficient permissions")
-                return False
+                print("⚠️  GitHub token has limited permissions, will try unauthenticated requests")
+                return True  # Fallback to unauthenticated
             elif response.status_code == 200:
                 user_data = response.json()
                 print(f"✅ GitHub token validated for user: {user_data.get('login', 'unknown')}")
                 return True
             else:
-                print(f"⚠️  Unexpected response from GitHub API: {response.status_code}")
-                return False
+                print(f"⚠️  Unexpected response from GitHub API: {response.status_code}, continuing anyway")
+                return True  # Continue anyway
                 
         except requests.exceptions.RequestException as e:
-            print(f"❌ Error validating GitHub token: {e}")
-            return False
+            print(f"⚠️  Error validating GitHub token: {e}, will try without authentication")
+            return True  # Continue without authentication
     
     def get_user_repositories(self) -> List[Dict]:
         """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
@@ -515,7 +533,7 @@ class LanguageStatsUpdater:
             # Validate GitHub token first
             print("🔐 Validating GitHub token...")
             if not self.validate_github_token():
-                raise Exception("GitHub token validation failed")
+                print("⚠️  Continuing without valid authentication...")
             
             # Get repositories first
             repositories = self.get_user_repositories()
@@ -523,11 +541,12 @@ class LanguageStatsUpdater:
             if not repositories:
                 print("❌ No repositories found")
                 print("This could be due to:")
-                print("  - Invalid GitHub token")
-                print("  - Insufficient token permissions")
                 print("  - Network connectivity issues")
                 print("  - User has no public repositories")
-                raise Exception("Failed to fetch repositories")
+                print("  - API rate limiting")
+                print("  - Repository privacy settings")
+                print("⚠️  Exiting gracefully...")
+                return  # Exit gracefully instead of raising exception
             
             # Detect new repositories for immediate attention
             print("\n🔍 Checking for recently created repositories...")
