@@ -13,6 +13,7 @@ permissions:
   contents: write
   pull-requests: write
   actions: read
+  metadata: read
 
 jobs:
   test-update:
@@ -22,7 +23,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+        # Use built-in GITHUB_TOKEN instead of personal token
+        token: ${{ github.token }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -41,8 +43,19 @@ jobs:
         echo "Username: ${{ github.repository_owner }}"
         echo "Workspace: $GITHUB_WORKSPACE"
         echo "Dry run mode: ${{ github.event.inputs.dry_run }}"
-        echo "Token available: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}"
-        echo "Built-in token available: ${{ github.token != '' }}"
+        echo "Token type: Built-in GITHUB_TOKEN"
+        echo "Actor: ${{ github.actor }}"
+        echo "Event: ${{ github.event_name }}"
+        
+        # Test GitHub API access
+        echo "🔐 Testing GitHub API access..."
+        if curl -s -H "Authorization: token ${{ github.token }}" \
+           -H "Accept: application/vnd.github.v3+json" \
+           "https://api.github.com/repos/${{ github.repository }}" > /dev/null; then
+          echo "✅ GitHub API access verified"
+        else
+          echo "❌ GitHub API access failed - this may cause script failures"
+        fi
         
     - name: Test language statistics update
       id: test-stats
@@ -59,7 +72,7 @@ jobs:
           exit 1
         fi
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+        GITHUB_TOKEN: ${{ github.token }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
     
     - name: Check for changes
@@ -120,7 +133,7 @@ jobs:
           --base "main" \
           --label "test,automated"
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+        GITHUB_TOKEN: ${{ github.token }}
     
     - name: Dry run summary
       if: github.event.inputs.dry_run == 'true'
