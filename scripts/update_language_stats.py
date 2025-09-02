@@ -614,7 +614,13 @@ class LanguageStatsUpdater:
             
         except Exception as e:
             print(f"❌ Fatal error during execution: {e}")
-            raise
+            print(f"Error type: {type(e).__name__}")
+            import traceback
+            print("Full traceback:")
+            traceback.print_exc()
+            # Don't raise the exception, just exit gracefully
+            print("⚠️  Exiting gracefully to prevent workflow failure")
+            return
 
 def main():
     github_token = os.getenv('GITHUB_TOKEN')

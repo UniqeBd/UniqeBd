@@ -1,0 +1,44 @@
+name: Update Language Stats (Simple)
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_private:
+        description: 'Include private repositories'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install requests
+      run: pip install requests
+    
+    - name: Run update script
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_USERNAME: ${{ github.repository_owner }}
+      run: python scripts/update_language_stats.py
+    
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        if ! git diff --staged --quiet; then
+          git commit -m "📊 Update language statistics"
+          git push
+        else
+          echo "No changes to commit"
+        fi
