@@ -11,6 +11,11 @@ on:
     # Allow triggering from other repositories when new code is pushed
     types: [update-stats]
 
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
 jobs:
   update-stats:
     runs-on: ubuntu-latest
@@ -19,7 +24,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -32,39 +37,63 @@ jobs:
         pip install -r requirements.txt
     
     - name: Update language statistics
+      id: update-stats
       run: |
         echo "🚀 Starting language statistics update..."
         echo "Repository: ${{ github.repository }}"
         echo "Username: ${{ github.repository_owner }}"
         echo "Workspace: $GITHUB_WORKSPACE"
-        python scripts/update_language_stats.py
+        
+        # Run the Python script with error handling
+        if python scripts/update_language_stats.py; then
+          echo "✅ Language statistics updated successfully"
+          echo "script_success=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Language statistics update failed"
+          echo "script_success=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
     
     - name: Create Pull Request if changed
+      if: steps.update-stats.outputs.script_success == 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        
+        # Check if there are any changes to README.md
         git add README.md
+        
         if git diff --staged --quiet; then
           echo "No changes to commit"
-        else
-          # Create a unique branch name with timestamp
-          BRANCH_NAME="auto-update-stats-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH_NAME"
-          git commit -m "🤖 Auto-update language statistics"
-          git push origin "$BRANCH_NAME"
-          
-          # Create Pull Request using GitHub API
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/pulls \
-            -d "{
-              \"title\": \"🤖 Auto-update language statistics\",
-              \"body\": \"Automated update of language statistics and repository data.\\n\\n📊 **Changes included:**\\n- Updated language percentages\\n- Refreshed repository statistics\\n- Updated technology badges\\n\\n🤖 This PR was automatically created by the language statistics workflow.\\n✅ Safe to merge - contains only data updates.\",
-              \"head\": \"$BRANCH_NAME\",
-              \"base\": \"main\"
-            }"
+          exit 0
         fi
+        
+        # Create a unique branch name with timestamp
+        BRANCH_NAME="auto-update-stats-$(date +%Y%m%d-%H%M%S)"
+        echo "Creating branch: $BRANCH_NAME"
+        
+        git checkout -b "$BRANCH_NAME"
+        git commit -m "🤖 Auto-update language statistics"
+        
+        # Push the branch
+        git push origin "$BRANCH_NAME"
+        
+        # Create Pull Request using GitHub CLI (more reliable than curl)
+        gh pr create \
+          --title "🤖 Auto-update language statistics" \
+          --body "Automated update of language statistics and repository data.
+
+📊 **Changes included:**
+- Updated language percentages
+- Refreshed repository statistics  
+- Updated technology badges
+
+🤖 This PR was automatically created by the language statistics workflow.
+✅ Safe to merge - contains only data updates." \
+          --head "$BRANCH_NAME" \
+          --base "main"
+      env:
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}

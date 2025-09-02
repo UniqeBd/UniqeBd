@@ -93,6 +93,30 @@ class LanguageStatsUpdater:
                     print(f"❌ Failed to make request after {max_retries} attempts")
                     return {}
     
+    def validate_github_token(self) -> bool:
+        """Validate GitHub token by making a test API call"""
+        try:
+            url = f'{self.base_url}/user'
+            response = requests.get(url, headers=self.headers, timeout=10)
+            
+            if response.status_code == 401:
+                print("❌ GitHub token is invalid or expired")
+                return False
+            elif response.status_code == 403:
+                print("❌ GitHub token has insufficient permissions")
+                return False
+            elif response.status_code == 200:
+                user_data = response.json()
+                print(f"✅ GitHub token validated for user: {user_data.get('login', 'unknown')}")
+                return True
+            else:
+                print(f"⚠️  Unexpected response from GitHub API: {response.status_code}")
+                return False
+                
+        except requests.exceptions.RequestException as e:
+            print(f"❌ Error validating GitHub token: {e}")
+            return False
+    
     def get_user_repositories(self) -> List[Dict]:
         """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
         repositories = []
@@ -101,9 +125,10 @@ class LanguageStatsUpdater:
         print(f"Fetching repositories for user: {self.username}")
         
         while True:
+            # Try both authenticated and unauthenticated approaches
             url = f'{self.base_url}/users/{self.username}/repos'
             params = {
-                'type': 'all',  # Include both public and private repositories
+                'type': 'public',  # Only public repositories for broader compatibility
                 'sort': 'updated',  # Sort by most recently updated first
                 'direction': 'desc',  # Newest first for immediate detection
                 'per_page': 100,
@@ -131,6 +156,21 @@ class LanguageStatsUpdater:
                 
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching repositories: {e}")
+                # Try fallback without authentication if token fails
+                if self.github_token and page == 1:
+                    print("🔄 Trying fallback without authentication...")
+                    try:
+                        headers_no_auth = {'Accept': 'application/vnd.github.v3+json'}
+                        response = requests.get(url, headers=headers_no_auth, params=params, timeout=10)
+                        response.raise_for_status()
+                        repos = response.json()
+                        if repos:
+                            print(f"✅ Fallback successful, found {len(repos)} repositories")
+                            repositories.extend(repos)
+                            page += 1
+                            continue
+                    except:
+                        pass
                 break
         
         print(f"Total repositories found: {len(repositories)}")
@@ -472,12 +512,22 @@ class LanguageStatsUpdater:
             print(f"🚀 Starting language statistics update for user: {self.username}")
             print("=" * 50)
             
+            # Validate GitHub token first
+            print("🔐 Validating GitHub token...")
+            if not self.validate_github_token():
+                raise Exception("GitHub token validation failed")
+            
             # Get repositories first
             repositories = self.get_user_repositories()
             
             if not repositories:
                 print("❌ No repositories found")
-                return
+                print("This could be due to:")
+                print("  - Invalid GitHub token")
+                print("  - Insufficient token permissions")
+                print("  - Network connectivity issues")
+                print("  - User has no public repositories")
+                raise Exception("Failed to fetch repositories")
             
             # Detect new repositories for immediate attention
             print("\n🔍 Checking for recently created repositories...")
