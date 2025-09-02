@@ -2,6 +2,12 @@ name: Simple Language Statistics Update
 
 on:
   workflow_dispatch: # Manual trigger only
+    inputs:
+      include_private:
+        description: 'Include private repositories (requires PERSONAL_ACCESS_TOKEN secret)'
+        required: false
+        default: 'false'
+        type: boolean
   schedule:
     # Run weekly instead of daily to reduce API usage
     - cron: '0 6 * * 0'  # Every Sunday at 6 AM UTC
@@ -19,7 +25,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        token: ${{ github.token }}
+        # Use personal token if available and requested, otherwise use built-in token
+        token: ${{ (github.event.inputs.include_private == 'true' && secrets.PERSONAL_ACCESS_TOKEN) || github.token }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -30,6 +37,26 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+    
+    - name: Check configuration
+      run: |
+        echo "🔍 Configuration:"
+        echo "Include private repos: ${{ github.event.inputs.include_private || 'false' }}"
+        echo "Personal token available: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}"
+        echo "Repository: ${{ github.repository }}"
+        echo "Username: ${{ github.repository_owner }}"
+        
+        if [[ "${{ github.event.inputs.include_private }}" == "true" ]]; then
+          if [[ "${{ secrets.PERSONAL_ACCESS_TOKEN }}" == "" ]]; then
+            echo "⚠️  WARNING: Private repos requested but no PERSONAL_ACCESS_TOKEN found!"
+            echo "   Add a Personal Access Token to repository secrets to access private repos."
+            echo "   Falling back to public repositories only."
+          else
+            echo "✅ Personal token found - will include private repositories"
+          fi
+        else
+          echo "ℹ️  Using public repositories only (default)"
+        fi
     
     - name: Test GitHub API access
       run: |
@@ -51,7 +78,8 @@ jobs:
         
         python scripts/update_language_stats.py
       env:
-        GITHUB_TOKEN: ${{ github.token }}
+        # Use personal token if available and private repos requested
+        GITHUB_TOKEN: ${{ (github.event.inputs.include_private == 'true' && secrets.PERSONAL_ACCESS_TOKEN) || github.token }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
     
     - name: Commit and push changes

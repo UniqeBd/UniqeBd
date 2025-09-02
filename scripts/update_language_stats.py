@@ -86,7 +86,7 @@ class LanguageStatsUpdater:
                 
                 # Check rate limit
                 if response.status_code == 403 and 'rate limit' in response.text.lower():
-                    print(f"⚠️  Rate limit hit. Waiting 60 seconds...")
+                    print(f"⚠️  Rate limit hit. Waiting 60 seconds... (attempt {attempt + 1}/{max_retries})")
                     time.sleep(60)
                     continue
                 
@@ -136,35 +136,54 @@ class LanguageStatsUpdater:
             return True  # Continue without authentication
     
     def get_user_repositories(self) -> List[Dict]:
-        """Fetch all public repositories for the user, sorted by last updated for immediate detection"""
+        """Fetch all repositories (public and private if authenticated) for the user"""
         repositories = []
         page = 1
         
         print(f"Fetching repositories for user: {self.username}")
         
         while True:
-            # Try both authenticated and unauthenticated approaches
-            url = f'{self.base_url}/users/{self.username}/repos'
+            # Try to get both private and public repos if authenticated
+            url = f'{self.base_url}/user/repos'  # This endpoint includes private repos if authenticated
             params = {
-                'type': 'public',  # Only public repositories for broader compatibility
-                'sort': 'updated',  # Sort by most recently updated first
-                'direction': 'desc',  # Newest first for immediate detection
+                'visibility': 'all',  # Get both public and private
+                'affiliation': 'owner',  # Only repos owned by the user
+                'sort': 'updated',
+                'direction': 'desc',
+                'per_page': 100,
+                'page': page
+            }
+            
+            # If that fails, fallback to public repos only
+            fallback_url = f'{self.base_url}/users/{self.username}/repos'
+            fallback_params = {
+                'type': 'public',
+                'sort': 'updated',
+                'direction': 'desc',
                 'per_page': 100,
                 'page': page
             }
             
             try:
+                # Try authenticated endpoint first (includes private repos)
                 repos = self.make_github_request(url, params)
+                if not repos:
+                    print(f"⚠️  No repositories returned from authenticated endpoint for page {page}")
+                    # Try public endpoint as fallback
+                    print("🔄 Trying public repositories endpoint...")
+                    repos = self.make_github_request(fallback_url, fallback_params)
+                    
                 if not repos:
                     print(f"⚠️  No repositories returned for page {page}")
                     break
                     
-                # Log repository info for new repository detection
+                # Log repository info
                 for repo in repos:
                     repo_name = repo['name']
+                    private = repo.get('private', False)
                     updated_at = repo.get('updated_at', 'unknown')
-                    created_at = repo.get('created_at', 'unknown')
-                    print(f"  Found repository: {repo_name} (updated: {updated_at})")
+                    privacy_status = "🔒 Private" if private else "🌐 Public"
+                    print(f"  Found repository: {repo_name} ({privacy_status}) (updated: {updated_at})")
                     
                 repositories.extend(repos)
                 page += 1
@@ -174,24 +193,30 @@ class LanguageStatsUpdater:
                 
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching repositories: {e}")
-                # Try fallback without authentication if token fails
-                if self.github_token and page == 1:
-                    print("🔄 Trying fallback without authentication...")
+                
+                # If authenticated request fails, try public-only endpoint
+                if page == 1:
+                    print("🔄 Attempting public repositories only...")
                     try:
-                        headers_no_auth = {'Accept': 'application/vnd.github.v3+json'}
-                        response = requests.get(url, headers=headers_no_auth, params=params, timeout=10)
-                        response.raise_for_status()
-                        repos = response.json()
+                        repos = self.make_github_request(fallback_url, fallback_params)
                         if repos:
-                            print(f"✅ Fallback successful, found {len(repos)} repositories")
+                            print(f"✅ Fallback successful - fetched {len(repos)} public repositories")
                             repositories.extend(repos)
                             page += 1
                             continue
-                    except:
-                        pass
+                    except Exception as fallback_error:
+                        print(f"❌ Fallback also failed: {fallback_error}")
+                
                 break
         
+        # Count private vs public repos
+        private_count = sum(1 for repo in repositories if repo.get('private', False))
+        public_count = len(repositories) - private_count
+        
         print(f"Total repositories found: {len(repositories)}")
+        print(f"  🌐 Public: {public_count}")
+        print(f"  🔒 Private: {private_count}")
+        
         return repositories
     
     def get_repository_languages(self, repo_name: str) -> Dict[str, int]:
@@ -265,6 +290,11 @@ class LanguageStatsUpdater:
             print(f"Processing repository: {repo_name}")
             
             languages = self.get_repository_languages(repo_name)
+            
+            # Skip if no language data available (rate limit, private repo, etc.)
+            if not languages:
+                print(f"  ⚠️  No language data available for {repo_name}")
+                continue
             
             # Check if this is a React project and React conversion is enabled
             react_conversion_percent = int(os.getenv('REACT_JS_ALLOCATION_PERCENT', '0'))
