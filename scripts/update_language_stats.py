@@ -9,9 +9,25 @@ import re
 import requests
 from typing import Dict, List
 import time
+import sys
+
+# Ensure UTF-8 output early (before any prints) for Windows consoles.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 
 class LanguageStatsUpdater:
     def __init__(self, github_token: str, username: str):
+        # Windows terminals can default to non-UTF-8 encodings, which may crash
+        # when printing emoji/unicode. Force UTF-8 when supported.
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
         self.github_token = github_token
         self.username = username
         self.headers = {
@@ -426,7 +442,7 @@ class LanguageStatsUpdater:
             logo = self.logo_slugs.get(language, language.lower())
             # URL encode the language name for the badge
             encoded_lang = language.replace('+', '%2B').replace('#', '%23').replace(' ', '%20')
-            badge = f'  <img src="https://img.shields.io/badge/{encoded_lang}-{color}?style=for-the-badge&logo={logo}&logoColor=white" alt="{language}"/>'
+            badge = f'  <img src="https://img.shields.io/badge/{encoded_lang}-{color}?style=for-the-badge&amp;logo={logo}&amp;logoColor=white" alt="{language}"/>'
             lang_badges.append(badge)
         
         # Detect frameworks and tools
@@ -446,7 +462,7 @@ class LanguageStatsUpdater:
         for framework, is_detected in frameworks.items():
             if is_detected and framework in framework_mapping:
                 name, color, logo = framework_mapping[framework]
-                badge = f'  <img src="https://img.shields.io/badge/{name}-{color}?style=for-the-badge&logo={logo}&logoColor=white" alt="{framework}"/>'
+                badge = f'  <img src="https://img.shields.io/badge/{name}-{color}?style=for-the-badge&amp;logo={logo}&amp;logoColor=white" alt="{framework}"/>'
                 framework_badges.append(badge)
         
         # Build the complete section

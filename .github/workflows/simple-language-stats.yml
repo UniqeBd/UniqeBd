@@ -1,6 +1,10 @@
 name: Simple Language Statistics Update
 
 on:
+  push:
+    branches: [ main ]
+  repository_dispatch:
+    types: [update-stats]
   workflow_dispatch: # This enables the "Run workflow" button
     inputs:
       include_private:
@@ -14,8 +18,8 @@ on:
         default: false
         type: boolean
   schedule:
-    # Run weekly instead of daily to reduce API usage
-    - cron: '0 6 * * 0'  # Every Sunday at 6 AM UTC
+    # Daily update to detect new repositories quickly
+    - cron: '0 0 * * *'  # Every day at 00:00 UTC
 
 permissions:
   contents: write
@@ -30,8 +34,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        # Use personal token if available and requested, otherwise use built-in token
-        token: ${{ (github.event.inputs.include_private == 'true' && secrets.PERSONAL_ACCESS_TOKEN) || github.token }}
+        # Prefer PAT if available (higher rate limit, private repos); fallback to GITHUB_TOKEN
+        token: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -46,7 +50,8 @@ jobs:
     - name: Check configuration
       run: |
         echo "🔍 Configuration:"
-        echo "Include private repos: ${{ github.event.inputs.include_private || 'false' }}"
+        echo "Event: ${{ github.event_name }}"
+        echo "Include private repos (workflow_dispatch only): ${{ github.event.inputs.include_private || 'false' }}"
         echo "Personal token available: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}"
         echo "Repository: ${{ github.repository }}"
         echo "Username: ${{ github.repository_owner }}"
@@ -83,11 +88,23 @@ jobs:
         
         python scripts/update_language_stats.py
       env:
-        # Use personal token if available and private repos requested
-        GITHUB_TOKEN: ${{ (github.event.inputs.include_private == 'true' && secrets.PERSONAL_ACCESS_TOKEN) || github.token }}
+        # Prefer PAT if available (higher rate limit, private repos); fallback to GITHUB_TOKEN
+        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
         GITHUB_USERNAME: ${{ github.repository_owner }}
     
+    - name: Show changes (dry run)
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+      run: |
+        git add README.md
+        if git diff --staged --quiet; then
+          echo "No changes detected"
+        else
+          echo "Changes detected (dry run):"
+          git diff --staged README.md
+        fi
+
     - name: Commit and push changes
+      if: github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true'
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
