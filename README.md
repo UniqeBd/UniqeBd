@@ -59,12 +59,12 @@
 <!-- LANG-TABLE-START -->
 | Language   | Percentage | Progress Bar |
 |------------|------------|--------------|
-| HTML       | 38.43%     | ![HTML](https://img.shields.io/badge/HTML-38.43%25-E34F26?style=flat-square) |
-| JavaScript | 19.73%     | ![JavaScript](https://img.shields.io/badge/JavaScript-19.73%25-F7DF1E?style=flat-square&labelColor=black) |
+| HTML       | 38.42%     | ![HTML](https://img.shields.io/badge/HTML-38.42%25-E34F26?style=flat-square) |
+| JavaScript | 19.72%     | ![JavaScript](https://img.shields.io/badge/JavaScript-19.72%25-F7DF1E?style=flat-square&labelColor=black) |
 | CSS        | 15.12%     | ![CSS](https://img.shields.io/badge/CSS-15.12%25-1572B6?style=flat-square) |
-| PHP        | 13.01%     | ![PHP](https://img.shields.io/badge/PHP-13.01%25-777BB4?style=flat-square) |
-| Dart       | 8.91%      | ![Dart](https://img.shields.io/badge/Dart-8.91%25-0175C2?style=flat-square) |
-| Python     | 1.83%      | ![Python](https://img.shields.io/badge/Python-1.83%25-3776AB?style=flat-square) |
+| PHP        | 13.00%     | ![PHP](https://img.shields.io/badge/PHP-13.00%25-777BB4?style=flat-square) |
+| Dart       | 8.90%      | ![Dart](https://img.shields.io/badge/Dart-8.90%25-0175C2?style=flat-square) |
+| Python     | 1.86%      | ![Python](https://img.shields.io/badge/Python-1.86%25-3776AB?style=flat-square) |
 | C++        | 1.40%      | ![C++](https://img.shields.io/badge/C%2B%2B-1.40%25-00599C?style=flat-square) |
 | CMake      | 1.08%      | ![CMake](https://img.shields.io/badge/CMake-1.08%25-808080?style=flat-square) |
 | Swift      | 0.18%      | ![Swift](https://img.shields.io/badge/Swift-0.18%25-FA7343?style=flat-square) |
