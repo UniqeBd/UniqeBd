@@ -2,10 +2,12 @@ name: Simple Language Statistics Update
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
   repository_dispatch:
     types: [update-stats]
-  workflow_dispatch: # This enables the "Run workflow" button
+  workflow_dispatch:
     inputs:
       include_private:
         description: 'Include private repositories'
@@ -18,112 +20,62 @@ on:
         default: false
         type: boolean
   schedule:
-    # Daily update to detect new repositories quickly
-    - cron: '0 0 * * *'  # Every day at 00:00 UTC
+    - cron: '0 0 * * *'
 
 permissions:
   contents: write
-  actions: read
-  metadata: read
+
+concurrency:
+  group: language-stats-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   update-stats:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        # Prefer PAT if available (higher rate limit, private repos); fallback to GITHUB_TOKEN
-        token: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Check configuration
-      run: |
-        echo "🔍 Configuration:"
-        echo "Event: ${{ github.event_name }}"
-        echo "Include private repos (workflow_dispatch only): ${{ github.event.inputs.include_private || 'false' }}"
-        echo "Personal token available: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' }}"
-        echo "Repository: ${{ github.repository }}"
-        echo "Username: ${{ github.repository_owner }}"
-        
-        if [[ "${{ github.event.inputs.include_private }}" == "true" ]]; then
-          if [[ "${{ secrets.PERSONAL_ACCESS_TOKEN }}" == "" ]]; then
-            echo "⚠️  WARNING: Private repos requested but no PERSONAL_ACCESS_TOKEN found!"
-            echo "   Add a Personal Access Token to repository secrets to access private repos."
-            echo "   Falling back to public repositories only."
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' && secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Update language statistics
+        env:
+          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' && secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+          GITHUB_USERNAME: ${{ github.repository_owner }}
+        run: python scripts/update_language_stats.py
+
+      - name: Show changes (dry run)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
+        run: |
+          git add README.md
+          if git diff --staged --quiet; then
+            echo "No changes detected"
           else
-            echo "✅ Personal token found - will include private repositories"
+            echo "Changes detected (dry run):"
+            git diff --staged README.md
           fi
-        else
-          echo "ℹ️  Using public repositories only (default)"
-        fi
-    
-    - name: Test GitHub API access
-      run: |
-        echo "🔐 Testing GitHub API access..."
-        if curl -s -H "Authorization: token ${{ github.token }}" \
-           -H "Accept: application/vnd.github.v3+json" \
-           "https://api.github.com/repos/${{ github.repository }}" > /dev/null; then
-          echo "✅ GitHub API access confirmed"
-        else
-          echo "❌ GitHub API access failed"
-          exit 1
-        fi
-    
-    - name: Update language statistics
-      run: |
-        echo "🚀 Starting language statistics update..."
-        echo "Repository: ${{ github.repository }}"
-        echo "Username: ${{ github.repository_owner }}"
-        
-        python scripts/update_language_stats.py
-      env:
-        # Prefer PAT if available (higher rate limit, private repos); fallback to GITHUB_TOKEN
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN || github.token }}
-        GITHUB_USERNAME: ${{ github.repository_owner }}
-    
-    - name: Show changes (dry run)
-      if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'true'
-      run: |
-        git add README.md
-        if git diff --staged --quiet; then
-          echo "No changes detected"
-        else
-          echo "Changes detected (dry run):"
-          git diff --staged README.md
-        fi
 
-    - name: Commit and push changes
-      if: github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true'
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        
-        # Check if there are changes
-        git add README.md
-        
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          echo "📝 Changes detected, committing..."
-          git commit -m "🤖 Auto-update language statistics
+      - name: Commit and push changes
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run != 'true'
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
 
-- Updated language percentages
-- Refreshed repository statistics
-- Updated technology badges
+          git add README.md
 
-Automated update by GitHub Actions"
-          
-          git push origin main
-          echo "✅ Changes pushed to main branch"
-        fi
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: auto-update language statistics"
+          git push
