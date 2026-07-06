@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths-ignore:
       - 'README.md'
+      - 'assets/**'
   repository_dispatch:
     types: [update-stats]
   workflow_dispatch:

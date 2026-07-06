@@ -78,8 +78,8 @@
 ## 📈 GitHub Stats
 
 <div align="center">
-  <img height="180em" src="https://github-readme-stats.vercel.app/api?username=UniqeBd&amp;show_icons=true&amp;theme=tokyonight&amp;include_all_commits=true&amp;count_private=true"/>
-  <img height="180em" src="https://github-readme-stats.vercel.app/api/top-langs/?username=UniqeBd&amp;layout=compact&amp;langs_count=8&amp;theme=tokyonight"/>
+  <img height="195em" src="./assets/github-stats.svg" alt="GitHub Stats"/>
+  <img height="195em" src="./assets/top-langs.svg" alt="Top Languages"/>
 </div>
 
 <div align="center">
@@ -96,10 +96,16 @@
 
 ---
 
-## 🏆 GitHub Trophies
+## 🏆 GitHub Highlights
 
 <div align="center">
-  <img src="https://github-profile-trophy.vercel.app/?username=UniqeBd&amp;theme=tokyonight&amp;no-frame=true&amp;no-bg=true&amp;margin-w=4" alt="GitHub Trophies"/>
+
+<p>
+  <img src="https://img.shields.io/github/followers/UniqeBd?style=for-the-badge&amp;logo=github&amp;label=Followers" alt="GitHub Followers"/>
+  <img src="https://img.shields.io/badge/Open%20Source-Contributor-1f6feb?style=for-the-badge&amp;logo=github" alt="Open Source Contributor"/>
+  <img src="https://img.shields.io/badge/Profile-@UniqeBd-24292f?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="GitHub Profile"/>
+</p>
+
 </div>
 
 ---

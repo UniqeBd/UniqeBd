@@ -1,0 +1,59 @@
+name: Update Profile Cards
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [update-stats]
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'assets/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-cards-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  update-cards:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate GitHub stats card
+        uses: stats-organization/github-readme-stats-action@v2
+        with:
+          card: stats
+          options: username=${{ github.repository_owner }}&show_icons=true&theme=tokyonight&include_all_commits=true
+          path: assets/github-stats.svg
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' && secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+
+      - name: Generate top languages card
+        uses: stats-organization/github-readme-stats-action@v2
+        with:
+          card: top-langs
+          options: username=${{ github.repository_owner }}&layout=compact&langs_count=8&theme=tokyonight
+          path: assets/top-langs.svg
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN != '' && secrets.PERSONAL_ACCESS_TOKEN || github.token }}
+
+      - name: Commit and push cards
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          git add assets/github-stats.svg assets/top-langs.svg
+
+          if git diff --staged --quiet; then
+            echo "No card changes to commit"
+            exit 0
+          fi
+
+          git commit -m "chore: update profile stat cards"
+          git push origin HEAD:main
